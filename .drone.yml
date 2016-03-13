@@ -1,0 +1,26 @@
+clone:
+  environment:
+  - GIT_SSL_NO_VERIFY=true
+build:
+  image: hypriot/rpi-golang:1.5
+  commands:
+  - GIT_SSL_NO_VERIFY=true git clone git://github.com/elasticsearch/logstash-forwarder.git
+  - cd logstash-forwarder
+  - GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go build --ldflags '-extldflags "-static"' -o logstash-forwarder
+  - rm ../binaries/logstash-forwarder
+  - mv logstash-forwarder ../binaries/logstash-forwarder
+  - cd ..
+  - sed -e 's/gliderlabs\/alpine:3.2/hypriot\/rpi-alpine-scratch:v3.2/g' Dockerfile > Dockerfile.armhf
+publish:
+  docker:
+    environment:
+    - DOCKER_LAUNCH_DEBUG=true
+    storage_driver: overlay
+    file: Dockerfile.armhf
+    username: $$DOCKER_USERNAME
+    password: $$DOCKER_PWD
+    email: lars.mogren@gmail.com
+    repo: larmog/logstash-forwarder
+    tag:
+    - "2.2.0"
+    - latest
